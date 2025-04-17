@@ -1,18 +1,23 @@
 from fastapi import FastAPI, UploadFile, File, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
-from typing import List
+from typing import List, Dict
 import os
 from dotenv import load_dotenv
-from web3 import Web3
-import ipfshttpclient
-import json
-from .api import reports
+import logging
 
 # Load environment variables
 load_dotenv()
 
-app = FastAPI(title="GreenStamp API")
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+app = FastAPI(
+    title="GreenStamp ESG Analysis API",
+    description="Advanced AI-powered ESG Analysis and Compliance Platform",
+    version="1.0.0"
+)
 
 # CORS middleware
 app.add_middleware(
@@ -23,54 +28,53 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Initialize Web3 and IPFS
-w3 = Web3(Web3.HTTPProvider(os.getenv("POLYGON_RPC_URL")))
-ipfs_client = ipfshttpclient.connect("/ip4/127.0.0.1/tcp/5001")
+# Include AI service routers
+from .api import ai_routes, compliance_routes, reporting_routes
 
-# Load contract ABI and address
-with open("contracts/abi/GreenStamp.json") as f:
-    contract_abi = json.load(f)
-
-contract_address = os.getenv("CONTRACT_ADDRESS")
-contract = w3.eth.contract(address=contract_address, abi=contract_abi)
-
-# Include routers
-app.include_router(reports.router, prefix="/reports", tags=["reports"])
+app.include_router(ai_routes.router, prefix="/api/ai", tags=["AI Analysis"])
+app.include_router(compliance_routes.router, prefix="/api/compliance", tags=["Compliance"])
+app.include_router(reporting_routes.router, prefix="/api/reporting", tags=["ESG Reporting"])
 
 @app.get("/")
 async def root():
-    return {"message": "Welcome to GreenStamp API"}
+    return {
+        "message": "Welcome to GreenStamp ESG Analysis API",
+        "features": [
+            "Advanced NLP for ESG Analysis",
+            "Automated ESG Reporting",
+            "Regulatory Compliance Analysis",
+            "ESG Performance Insights"
+        ]
+    }
 
-@app.post("/upload")
-async def upload_report(file: UploadFile = File(...)):
+@app.get("/health")
+async def health_check():
+    return {"status": "healthy"}
+
+@app.post("/analyze-document")
+async def analyze_document(file: UploadFile = File(...)):
     try:
         # Save the uploaded file temporarily
         file_path = f"temp/{file.filename}"
+        os.makedirs("temp", exist_ok=True)
+        
         with open(file_path, "wb") as buffer:
             content = await file.read()
             buffer.write(content)
         
-        # TODO: Implement AI analysis
-        # For now, return mock data
-        return {
-            "message": "File uploaded successfully",
-            "filename": file.filename,
-            "esg_score": 85,
-            "summary": "Mock ESG report summary",
-            "greenwashing_risk": "Low"
-        }
+        # Process the document using AI services
+        from .services.ai_service import ESGAIService
+        ai_service = ESGAIService()
+        
+        analysis_result = await ai_service.analyze_document(file_path)
+        
+        # Clean up
+        os.remove(file_path)
+        
+        return analysis_result
     except Exception as e:
+        logger.error(f"Error analyzing document: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
-
-@app.get("/reports")
-async def get_reports():
-    # TODO: Implement report listing
-    return {"reports": []}
-
-@app.get("/reports/{report_id}")
-async def get_report(report_id: str):
-    # TODO: Implement report retrieval
-    return {"report_id": report_id, "details": {}}
 
 if __name__ == "__main__":
     import uvicorn
