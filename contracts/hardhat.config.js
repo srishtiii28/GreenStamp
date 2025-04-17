@@ -1,26 +1,16 @@
-require("@nomicfoundation/hardhat-toolbox");
 require("dotenv").config();
+require("@nomicfoundation/hardhat-toolbox");
 
-/** @type import('hardhat/config').HardhatUserConfig */
 module.exports = {
   solidity: "0.8.19",
   defaultNetwork: "hardhat",
   networks: {
     hardhat: {},
     educhain: {
-      url: process.env.EDUCHAIN_RPC_URL || "https://rpc.edu-chain.raas.gelato.cloud",
+      url: process.env.EDUCHAIN_RPC_URL,
       accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [],
-      chainId: 41923,
+      chainId: 656476,
       gasPrice: 100000000,
     },
   },
-  etherscan: {
-    apiKey: process.env.SNOWTRACE_API_KEY,
-  },
-  paths: {
-    sources: "./src",
-    tests: "./test",
-    cache: "./cache",
-    artifacts: "./artifacts"
-  },
-}; 
+};
