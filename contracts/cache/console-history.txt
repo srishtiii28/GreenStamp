@@ -1,0 +1,4 @@
+const balance = await ethers.provider.getBalance("0x79BDD9e69b4C24d951d0ED1748E2582373a4235e");
+const { ethers } = require("hardhat");
+console.log("Balance:", ethers.utils.formatEther(balance));
+const balance = await ethers.provider.getBalance("0x79BDD9e69b4C24d951d0ED1748E2582373a4235e");

@@ -5,7 +5,7 @@ import { ethers } from 'ethers';
 import { GreenStamp } from '../contracts/GreenStamp';
 
 export const injected = new InjectedConnector({
-  supportedChainIds: [80001], // Polygon Mumbai
+  supportedChainIds: [41923], // Educhain
 });
 
 interface Web3ContextType {
